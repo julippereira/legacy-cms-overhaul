@@ -1,0 +1,66 @@
+# ==============================================================
+# OS & IDE Metadata
+# ==============================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# ==============================================================
+# Environment & Sensitive Files
+# ==============================================================
+.env
+.env.*
+*.log
+wp-config.php
+
+# ==============================================================
+# WordPress Core & Uploads (Ignora o lixo e mídias pesadas)
+# ==============================================================
+# Se você clonar a pasta wp-content inteira por engano:
+wp-admin/
+wp-includes/
+wp-content/uploads/
+wp-content/blogs.dir/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/cache/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+
+# Ignora plugins e temas padrão/terceiros instalados nativamente
+wp-content/plugins/
+wp-content/themes/twenty*
+wp-content/themes/full-frame/
+!wp-content/themes/full-frame-child/
+
+# ==============================================================
+# Package Managers & Builds (se usar Node/Sass futuramente)
+# ==============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+vendor/
+composer.lock
+
+# ==============================================================
+# Database / Raw Exports (Segurança para não vazar emails/senhas)
+# ==============================================================
+*.sql
+*.sql.gz
+*.tar.gz
+*.zip
+*.bak
