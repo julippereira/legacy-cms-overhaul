@@ -58,7 +58,8 @@ function custom_fullframe_footer_content() {
             </div>
 
             <div id="footer-right-content" class="powered">
-                Desenvolvido por <a href="https://seusite.com" target="_blank" rel="noopener noreferrer">Seu Site</a>
+                Desenvolvido por <a href="https://github.com/julippereira/" target="_blank" rel="noopener noreferrer">Juliana R Pereira</a> |
+                <a href="https://curitibametal.com" target="_blank" rel="noopener noreferrer">CuritibaMetal.com</a>
             </div>
         </div>
     </div>
