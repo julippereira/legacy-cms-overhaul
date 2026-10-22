@@ -1,0 +1,235 @@
+/*
+Theme Name: Full Frame Child - Sepulchral Voice Zine
+Theme URI: https://github.com/seu-usuario/legacy-cms-overhaul
+Description: Custom editorial child theme for Sepulchral Voice Fanzine archive. Features a responsive 4-column CSS Grid archive, edge-to-edge full-bleed containers, and sanitized typography.
+Author: Juliana R Pereira
+Template: full-frame
+Version: 1.0.0
+Text Domain: full-frame-child
+*/
+
+/* ==============================================================
+   1. GLOBAL CONTAINER OVERRIDES & EDGE-TO-EDGE
+============================================================== */
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+}
+
+#page,
+.site,
+.site-content,
+#content,
+#content .wrapper,
+#primary,
+#main {
+    max-width: 96% !important;
+    width: 100% !important;
+    float: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* ==============================================================
+   2. HEADER FEATURED IMAGE (FULL-WIDTH 100VW)
+============================================================== */
+#header-featured-image,
+#header-featured-image .wrapper {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+}
+
+#header-featured-image img {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 100vw !important;
+    height: auto !important;
+    min-height: 480px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ==============================================================
+   3. ARCHIVE 4-COLUMN RESPONSIVE CSS GRID
+============================================================== */
+.archive #primary,
+.archive #main {
+    width: 100% !important;
+    max-width: 100% !important;
+    float: none !important;
+    margin: 0 !important;
+}
+
+.archive .sidebar-primary,
+.archive #secondary {
+    display: none !important;
+}
+
+.archive-gallery-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    clear: both !important;
+    margin-top: 25px !important;
+    margin-bottom: 40px !important;
+}
+
+.archive-gallery-grid .gallery-post-card,
+.archive-gallery-grid article {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important; /* Previne overflow de títulos longos */
+    float: none !important;
+    clear: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Thumbnail com proporção 1:1 rigorosa */
+.archive-gallery-grid .gallery-card-thumb {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: hidden !important;
+}
+
+.archive-gallery-grid .gallery-card-thumb img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+/* Tipografia e Resumo */
+.gallery-card-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    padding-top: 10px !important;
+}
+
+.gallery-card-title {
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important;
+    margin: 0 0 6px 0 !important;
+}
+
+.gallery-card-title a {
+    color: #111 !important;
+    text-decoration: none !important;
+}
+
+.gallery-card-title a:hover {
+    color: #555 !important;
+}
+
+.gallery-card-excerpt {
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    color: #555 !important;
+    margin: 6px 0 12px 0 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.gallery-read-more {
+    display: inline-block !important;
+    margin-left: 4px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-decoration: none !important;
+}
+
+.gallery-card-date {
+    margin-top: auto !important;
+    font-size: 11px !important;
+    color: #888 !important;
+    text-transform: uppercase !important;
+}
+
+/* ==============================================================
+   4. HOMEPAGE & FOOTER ADJUSTMENTS
+============================================================== */
+.home .entry-header,
+.home .page-header,
+.home .entry-title,
+.home .entry-date,
+.home .entry-meta,
+.home #primary .hentry header {
+    display: none !important;
+}
+
+#colophon,
+#site-generator,
+#supplementary {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#site-generator .wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px 40px !important;
+    box-sizing: border-box !important;
+}
+
+#footer-left-content {
+    float: left !important;
+    width: auto !important;
+    text-align: left !important;
+}
+
+#footer-right-content {
+    float: right !important;
+    width: auto !important;
+    text-align: right !important;
+}
+
+/* ==============================================================
+   5. RESPONSIVE BREAKPOINTS
+============================================================== */
+@media screen and (max-width: 1024px) {
+    .archive-gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .archive-gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 14px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .archive-gallery-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
