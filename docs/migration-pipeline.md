@@ -46,3 +46,44 @@ UPDATE wp_term_taxonomy
 SET taxonomy = 'post_tag' 
 WHERE taxonomy = 'category' 
   AND term_id NOT IN (/* Protected Macro-Category IDs */);
+```
+
+## 3.2 Macro-Category Schema Definition
+
+A clean, 5-tier dimensional model was established to categorize every historical and incoming publication:
+
+| Macro-Category | Description | Editorial Target |
+| :--- | :--- | :--- |
+| `Edições` | Physical/print fanzine issues | Full catalog of printed releases |
+| `Entrevistas` | Long-form Q&A features | Band and artist interviews |
+| `Notícias` | Scene announcements & press releases | Fast-turnaround news updates |
+| `Shows` | Live gig photography and reports | On-site event coverage |
+| `Arquivos do Site` | Evergreen legacy content | Retrospective features and editorial notes |
+
+## 3.3 Rule-Based Post Reclassification
+
+Posts were reassociated with the new macro-categories using bulk tagging rules, pattern matching across post titles/excerpts, and manual editorial review.
+
+## 4. Chronological Archival Partitioning
+
+To enable seamless historical discovery across the 2007–2026 timeline:
+
+1. Date-Based Indexing: Structured dynamic year/month archives using native WordPress rewrite endpoints (/YYYY/MM/).
+2. Dedicated Archive Template: Routed taxonomy queries directly to a custom, non-blocking archive.php template.
+3. Query Optimization (pre_get_posts): Standardized pagination boundaries across archive queries:
+
+```php
+function custom_archive_posts_per_page( $query ) {
+    if ( ! is_admin() && $query->is_main_query() && ( is_archive() \vert{}\vert{} is_category() \vert{}\vert{} is_tag() ) ) {$query->set( 'posts_per_page', 16 );
+    }
+}
+add_action( 'pre_get_posts', 'custom_archive_posts_per_page' );
+```
+
+## 5. Hosting & Infrastructure Deployment
+
+The operational environment was configured on Hostinger:
+
+1. DNS Routing & Security: Apex and subdomain DNS records pointed to web servers; automated SSL/TLS handshake provisioning.
+2. Server Stack: Nginx/Apache hybrid stack with PHP 8.x and MySQL 8.x.
+3. Performance Layer: Server-level object caching and Gzip/Brotli compression for fast static asset delivery.
