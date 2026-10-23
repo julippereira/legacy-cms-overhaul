@@ -14,6 +14,11 @@ This project rescued and stabilized the digital infrastructure of an underground
 - **Edge-to-Edge Visual Identity:** Implemented a panoramic full-bleed header banner (`100vw`), eliminating letterboxing and native parent-theme black borders.
 - **Custom Institutional Footer:** Stripped third-party theme attribution links, integrating a continuous editorial copyright notice (**Copyright © 2007 – 2026 Sepulchral Voice**) alongside direct technical development attribution.
 
+### 🔄 Upstream Migration Heritage (Blogger / Blogspot)
+The portal's digital archive originated on the **Google Blogger** platform before transitioning to self-hosted WordPress. This legacy upstream pipeline introduced significant technical debt:
+- **Hardcoded Image Assets & Canonical Links:** Lingering references to `*.blogspot.com` domains and legacy Google UserContent CDNs.
+- **Permalink & Slug Inconsistencies:** Nested `/yyyy/mm/post-title.html` historical permalink structures conflicting with modern rewrite rules.
+- **Taxonomy Flattening:** Blogger's single-tier "labels" were imported into WordPress without relational hierarchies, causing duplicate entries, untyped tags, and broken term post counts.
 ---
 
 ## 🏗️ Architecture & Component Design
@@ -22,16 +27,22 @@ The overhaul follows a clean separation of concerns across template rendering, v
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        PRESENTATION LAYER                              │
-│  child-theme/archive.php    ──> Custom Loop & CSS Grid DOM             │
-│  child-theme/style.css      ──> Layout Overrides (Full-Bleed, Grid)    │
-│  child-theme/functions.php  ──> Asset Enqueue & Hook Filters (Footer)  │
+│                        LEGACY INGESTION PIPELINE                       │
+│  Google Blogger XML Export  ──> WordPress Importer (Historical Ingest) │
+│  Raw Label Import           ──> Fragmented Taxonomy & Nested Slugs     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │                         DATA & STORAGE LAYER                           │
-│  sql/search-replace-ssl.sql ──> HTTPS Migration & URL Remediation      │
+│  sql/search-replace-ssl.sql ──> HTTPS Migration & Host Remapping       │
 │  sql/taxonomy-migration.sql ──> Term Consolidation & Count Resync      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                        PRESENTATION LAYER                              │
+│  child-theme/archive.php    ──> Custom Loop & CSS Grid DOM             │
+│  child-theme/style.css      ──> Layout Overrides (Full-Bleed, Grid)    │
+│  child-theme/functions.php  ──> Asset Enqueue & Hook Filters (Footer)  │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
