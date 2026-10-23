@@ -1,94 +1,216 @@
-# Sepulchral Voice Fanzine — Legacy Data Migration & Editorial CMS Architecture
+# Sepulchral Voice Fanzine — Legacy CMS Overhaul & Archive Standardization
 
-End-to-end legacy migration pipeline, taxonomy restructuring, and front-end customization for the historical archive of **Sepulchral Voice** fanzine (an independent underground Heavy Metal publication active since 2007).
-
-This project encompassed the extraction and sanitization of unstructured data from Google Blogger, relational metadata remodeling within WordPress, hosting infrastructure provisioning, and reverse engineering the **Full Frame** theme via a custom Child Theme (PHP Core Hooks & Modern CSS Grid).
+Technical documentation covering the restoration, structural modernization, database remediation, and visual standardization of the **Sepulchral Voice Fanzine** editorial portal (WordPress / Full Frame Child Theme).
 
 ---
 
-## 1. Challenge Overview
+## 📌 Context & Objectives
 
-The Sepulchral Voice archive holds nearly two decades of reviews, interviews, gig reports, and underground heavy metal historical documentation. The legacy infrastructure hosted on Blogger imposed severe constraints on scalability, layout control, and data governance.
+This project focused on rescuing and stabilizing the digital infrastructure of an underground print publication, migrating the legacy environment to end-to-end HTTPS/SSL, sanitizing mixed-content database references, and redesigning historical archives into a clean, symmetric CSS Grid layout.
 
-### Core Technical Bottlenecks:
-- **Corrupted Taxonomy on Ingestion:** The default Blogger-to-WordPress exporter converted thousands of flat labels directly into standalone primary categories, resulting in an unnormalized, bloated taxonomy.
-- **Loss of Temporal Hierarchy:** Lack of structured chronological partitioning (by year and month) for archival exploration.
-- **Monolithic Legacy Layout:** The parent theme (*Full Frame*) relied on legacy float/clear mechanics, hard-coded wrapper max-widths, and rigid core hooks that prevented balanced grid layouts and responsive pagination.
-
----
-
-## 2. Solution Architecture & Data Pipeline
-```
-┌──────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
-│  Google Blogger  │ ----> │  Extract & Transform   │ ----> │ WordPress Core (MySQL) │
-│ (XML / 2007-2026)│       │ (Initial Sanitization) │       │   (Clean Taxonomies)   │
-└──────────────────┘       └────────────────────────┘       └────────────────────────┘
-│
-▼
-┌──────────────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
-│   UI/UX: Full Frame      │ <---- │ PHP Hooks & Core Logic │ <---- │ Temporal Partitioning  │
-│ (4-Col Grid / No-Floats) │       │ (Archive / Pagination) │       │ (Year / Month / Macro) │
-└──────────────────────────┘       └────────────────────────┘       └────────────────────────┘
-```
-
-### 2.1. Taxonomy Modeling & Sanitization
-1. **Dimensional Metadata Conversion (Categories to Tags):** Executed database scripting and taxonomy conversion routines to reclassify thousands of flat labels into contextual *Post Tags*, eliminating indexing redundancies.
-2. **Hierarchical Macro-Category Schema:** Restructured the publishing model around well-defined editorial entities:
-   - `Edições` (Print Zine Issues)
-   - `Entrevistas` (Interviews)
-   - `Notícias` (News & Press Releases)
-   - `Shows` (Live Gig Coverage)
-   - `Arquivos do Site` (Historical Archives)
-3. **Temporal Archival Indexing:** Implemented date-based partitioning by year and month to allow fast navigation across legacy archives without query performance penalties.
+### Key Deliverables:
+- **Security & Infrastructure:** Enforced end-to-end SSL/TLS certificates and sanitized legacy URLs via targeted MySQL search-and-replace routines.
+- **Modern CSS Grid Layout:** Replaced the legacy blog flow with a 4-column symmetric grid (`.archive-gallery-grid`) on desktop, ensuring uniform cover aspect ratios and consistent typography.
+- **Edge-to-Edge Visual Identity:** Implemented a full-bleed panoramic header (`100vw`), eliminating letterboxing and native parent-theme black border constraints.
+- **Custom Institutional Footer:** Stripped third-party theme attribution links, integrating a continuous editorial copyright notice (**Copyright © 2007 – 2026 Sepulchral Voice**) alongside direct technical development attribution.
 
 ---
 
-## 3. Theme Engineering & Front-end Overhaul (Child Theme)
+## 📸 Visual Assets (Screenshots)
 
-To transform the interface into a brutalist, balanced black-and-white editorial catalog, the parent theme core underwent key structural overrides:
+### 1. Editorial Archive Grid (Desktop)
+Standardized multi-column layout displaying album releases and news items with normalized typography.
 
-### 3.1. Archive Loop Restructuring (`archive.php`)
-- **Sequential Layout Removal:** Deprecated the native linear stream layout in favor of an independent card grid with a strict `1:1 aspect-ratio` container and aligned metadata.
-- **Dynamic Excerpt Sanitation:** Standardized teaser lengths using explicit token trimming (`wp_trim_words`) paired with unified inline calls-to-action (`Read more →`), preventing vertical tile misalignments.
+![Editorial Archive Grid](docs/screenshots/desktop-archive-grid.png)
 
-### 3.2. WordPress Hook Overrides (`functions.php`)
-- **Archive Title Prefix Stripping:** Programmatically removed default WordPress label prefixes (`Category:`, `Archives:`) via the `get_the_archive_title_prefix` filter.
-- **Pre-query Optimization:** Intercepted the main query lifecycle through `pre_get_posts` to lock `posts_per_page` to multiples of 4 (12 or 16 posts) strictly on taxonomy archives, preventing orphan grid slots and 404 pagination errors on `paged` routes.
-- **Decoupled Footer Injection:** Unhooked the native hardcoded action `fullframe_footer_content` and injected a custom dynamic component featuring the historical date range (`2007 - Present`) and custom publisher credentials.
+### 2. Historical Taxonomy & Categorized Archive
+Chronological release archives filtered by category and metadata taxonomies.
 
-### 3.3. Style Modernization & CSS Inheritance Break (`style.css`)
-- **Modern CSS Grid Adoption:** Eliminated theme-level float clearings (`.clearfix:after`, manual floats) and enforced `grid-template-columns: repeat(4, minmax(0, 1fr))` with `min-width: 0` constraints to eliminate overflow and keep columns aligned.
-- **Edge-to-Edge UI (100vw Viewport Scaling):** Bypassed the hardcoded 1280px container constraints of `.wrapper` using negative viewport-relative horizontal margins (`calc(-50vw + 50%)`) to achieve full-bleed header imagery and footer elements.
+![Categorized Historical Archive](docs/screenshots/desktop-taxonomy-archive.png)
 
----
+### 3. Edge-to-Edge Panoramic Header
+Full-bleed header banner layout spanning the entire viewport width.
 
-## 4. Tech Stack & Infrastructure
+![Panoramic Header](docs/screenshots/header-full-bleed.png)
 
-- **CMS & Application Layer:** WordPress 6.x, PHP 8.x
-- **Front-end & Styling:** Modern CSS3 (CSS Grid, Flexbox, Media Queries, Viewport Units)
-- **Database:** MySQL (Relational cleanup across `wp_terms`, `wp_term_taxonomy`, and `wp_term_relationships`)
-- **Infrastructure & Hosting:** DNS Zone management, SSL certificate enforcement, and web server configuration on Hostinger
+### 4. Institutional Custom Footer
+Streamlined editorial footer with persistent copyright and clean attribution.
+
+![Custom Footer](docs/screenshots/footer-custom.png)
 
 ---
 
-## 5. Repository Structure
+## 🛠️ Tech Stack
+
+- **CMS:** WordPress
+- **Base Theme:** Full Frame (Catch Themes)
+- **Custom Layer:** Dedicated Child Theme (`functions.php`, `style.css`), CSS Grid, Flexbox
+- **Hosting & Database:** PHP 8.x, MySQL / MariaDB, Hostinger / LiteSpeed Cache
+
+---
+
+## 📝 Known Issues & Technical Roadmap
+
+### Mobile Navigation Drawer (Technical Debt / Backlog)
+- **Root Cause Analysis:** The parent theme couples legacy DOM-manipulation scripts (`Sidr.js`) with rigid inline styling on `#fixed-header`. During mobile refactoring, automated breakpoints conflicted with fixed positioning rules, causing redundant drawer triggers and overlapping text nodes.
+- **Architectural Decision:** To safeguard desktop production stability and preserve the newly implemented archive grid, aggressive CSS overrides were paused for this release cycle.
+- **Planned Refactor:** Dequeue `fullframe-custom.js` via `wp_dequeue_script()` and override the template in `header.php` to deploy a lightweight, dependency-free CSS-first mobile drawer.
+
+---
+
+## 📂 Repository Structure
 
 ```text
 ├── child-theme/
-│   ├── archive.php           # 4-column full-width responsive grid archive template
-│   ├── functions.php         # pre_get_posts query hooks, title filters, and footer overrides
-│   └── style.css             # Float clearing overrides, CSS Grid rules, and full-bleed layout
+│   ├── style.css             # CSS Grid overrides and full-bleed layout rules
+│   └── functions.php         # Header/footer hooks and custom filters
 ├── docs/
-│   ├── migration-pipeline.md # Step-by-step documentation for Blogger data extraction
-│   └── screenshots/          # Before/after UI comparisons and grid responsiveness
+│   └── screenshots/          # Visual verification assets
+│       ├── desktop-archive-grid.png
+│       ├── desktop-taxonomy-archive.png
+│       ├── header-full-bleed.png
+│       └── footer-custom.png
+├── sql/
+│   └── search-replace-ssl.sql # URL remediation queries for HTTPS migration
 └── README.md
 ```
 
-## 6. Key Outcomes
+---
 
-Historical Preservation: 100% of data generated since 2007 was preserved and migrated into a clean, normalized relational model.
+## 💻 Implementation Highlights
 
-Optimized Information Architecture: Consolidated hundreds of redundant category labels into 5 clear macro-categories supported by controlled vocabulary tags.
+### 1. Database URL Remediation (`sql/search-replace-ssl.sql`)
+To eliminate browser mixed-content warnings post-SSL provisioning without relying on resource-heavy dynamic rewriting plugins, direct database replacement routines were executed across core WordPress tables:
 
-Visual Symmetry & Stability: Fast, responsive layout with uniform card heights regardless of the original image dimensions.
+```sql
+-- Core Site Configuration
+UPDATE wp_options 
+SET option_value = REPLACE(option_value, '[http://sepulchralvoicefanzine.com](http://sepulchralvoicefanzine.com)', '[https://sepulchralvoicefanzine.com](https://sepulchralvoicefanzine.com)') 
+WHERE option_name IN ('home', 'siteurl');
+
+-- Post & Page Content Strings
+UPDATE wp_posts 
+SET post_content = REPLACE(post_content, '[http://sepulchralvoicefanzine.com](http://sepulchralvoicefanzine.com)', '[https://sepulchralvoicefanzine.com](https://sepulchralvoicefanzine.com)');
+
+-- Attachment & GUID References
+UPDATE wp_posts 
+SET guid = REPLACE(guid, '[http://sepulchralvoicefanzine.com](http://sepulchralvoicefanzine.com)', '[https://sepulchralvoicefanzine.com](https://sepulchralvoicefanzine.com)');
+
+-- Post Metadata & Custom Fields
+UPDATE wp_postmeta 
+SET meta_value = REPLACE(meta_value, '[http://sepulchralvoicefanzine.com](http://sepulchralvoicefanzine.com)', '[https://sepulchralvoicefanzine.com](https://sepulchralvoicefanzine.com)');
+```
+
+---
+
+## 2. Symmetric Archive Grid (`child-theme/style.css`)
+
+Overrides the theme's single-column stacked blog flow with a robust CSS Grid declaration:
+
+```css
+/* Standardized Editorial 4-Column Grid */
+.archive-gallery-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    width: 100% !important;
+    margin: 30px auto !important;
+    box-sizing: border-box !important;
+}
+
+.archive-gallery-grid .gallery-post-card {
+    display: flex !important;
+    flex-direction: column !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.archive-gallery-grid .gallery-post-thumbnail img {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+```
+
+---
+
+## 3. Edge-to-Edge Panoramic Header (`child-theme/style.css`)
+
+Breaks out of native nested container constraints to ensure full-bleed image presentation:
+
+```css
+/* Full-Bleed Panoramic Header */
+#header-featured-image {
+    width: 100vw !important;
+    position: relative !important;
+    left: 50% !important;
+    right: 50% !important;
+    margin-left: -50vw !important;
+    margin-right: -50vw !important;
+    overflow: hidden !important;
+}
+
+#header-featured-image img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+}
+```
+
+---
+
+## 4. Custom Footer Branding Hook (`child-theme/functions.php`)
+
+Replaces vendor attribution filters with editorial copyright credits:
+
+```php
+<?php
+/**
+ * Unhooks Catch Themes default footer and injects custom editorial copyright.
+ */
+function fullframe_child_custom_footer_content() {
+    ?>
+    <div id="site-generator" class="three">
+        <div class="wrapper">
+            <div id="footer-left-content" class="copyright">
+                Copyright &copy; 2007 &ndash; <?php echo date('Y'); ?> 
+                <a href="<?php echo esc_url( home_url( '/' ) ); ?>">Sepulchral Voice Fanzine</a>. All Rights Reserved.
+            </div>
+            <div id="footer-right-content" class="powered">
+                Infrastructure &amp; Layout Engineering by <a href="[https://github.com/julianareginap](https://github.com/julianareginap)" target="_blank" rel="noopener noreferrer">Juliana Regina</a>.
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+function fullframe_child_override_footer() {
+    remove_action( 'fullframe_footer', 'fullframe_footer_content', 100 );
+    add_action( 'fullframe_footer', 'fullframe_child_custom_footer_content', 100 );
+}
+add_action( 'init', 'fullframe_child_override_footer' );
+```
+
+---
+
+## 🚀 Deployment & Environment Setup
+
+1. Clone the repository:
+```
+git clone [https://github.com/julippereira/legacy-cms-overhaul.git](https://github.com/julianareginap/legacy-cms-overhaul.git)
+```
+2. Deploy the Child Theme:
+- Upload child-theme/ to wp-content/themes/full-frame-child/.
+- Activate the child theme via Appearance > Themes.
+3. Run Database Migrations (Hostinger / phpMyAdmin):
+- Execute the commands in `sql/search-replace-ssl.sql` using phpMyAdmin or WP-CLI (`wp search-replace).
+4. Purge Cache:
+- Clear Hostinger Server Cache and LiteSpeed Cache to ensure updated CSS rules take immediate effect.
+
+---
+
+## 📄 License
+
+This project documentation and custom child-theme overrides are released under the MIT License.
 
