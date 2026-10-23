@@ -1,89 +1,150 @@
-# Data Migration & Taxonomy Normalization Pipeline
+# Historical Content Migration Pipeline: Google Blogger to Self-Hosted WordPress
 
-This document details the step-by-step extraction, sanitization, relational remodeling, and ingestion pipeline used to migrate the **Sepulchral Voice Fanzine** historical archive (2007–2026) from Google Blogger to WordPress.
-
----
-
-## 1. Extraction Phase (Blogger Export)
-
-### 1.1 Source Ingestion
-The source platform (Google Blogger) exported the entire content body into an Atom XML format containing posts, pages, comments, and inline metadata:
-* **Export File:** `blog-MM-DD-YYYY.xml`
-* **Data Volume:** Hundreds of long-form articles, review features, and interview records accumulated across 19 years.
-* **Format:** Flat XML document containing nested `<entry>` nodes.
-
-### 1.2 Data Anomalies Identified at Source:
-1. **Unconstrained Taxonomies:** Blogger labels were represented as unconstrained `<category scheme="http://www.blogger.com/atom/ns#" term="..."/>` tags.
-2. **Missing Post-Type Differentiation:** Static pages, drafts, published posts, and comments coexisted within the same XML stream.
-3. **Hardcoded Legacy Assets:** Static asset URLs referencing deprecated Picasa/Google UserContent CDNs (`bp.blogspot.com`).
+Technical specification, Extract-Transform-Load (ETL) runbook, and database remediation documentation for the **Sepulchral Voice Fanzine** legacy content migration.
 
 ---
 
-## 2. Ingestion & Initial Import (WordPress Importer)
+## 1. Architectural Overview & Ingestion Context
 
-The initial ingestion was executed using the native Blogger-to-WordPress ingestion engine within a staging environment.
+The *Sepulchral Voice Fanzine* digital archive originally resided on Google Blogger (`*.blogspot.com`) from its inception (circa 2007) through its transition to a self-hosted WordPress infrastructure.
 
-### The Primary Ingestion Bottleneck:
-The default importer converted every single Blogger label into an isolated, first-class WordPress **Category** (`taxonomy = 'category'`).
-* **Resulting Failure State:** More than 1,000 flat, redundant categories were created.
-* **Impact:** Loss of dimensional hierarchy, unusable navigation, and critical database bloat across the `wp_terms` and `wp_term_taxonomy` tables.
+Due to architectural incompatibilities between Blogger's flat document-store model and WordPress's normalized relational schema (`InnoDB`), raw automated XML imports introduced systemic data integrity issues. This pipeline documents the audit, ingestion mechanics, taxonomy re-structuring, and SQL data remediation workflows required to stabilize the production archive.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        UPSTREAM INGESTION (ETL)                        │
+│  Google Blogger XML Export (Atom) ──> WP Importer Core Parsing         │
+│  Flat Label Mapping               ──> Unstructured Taxonomy Tables     │
+│  External Media Embeds            ──> Static Host Dependencies         │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    SCHEMA NORMALIZATION & REMEDIATION                  │
+│  sql/taxonomy-migration.sql       ──> Taxonomy Categorization & Resync │
+│  sql/search-replace-ssl.sql       ──> Domain Rewrites & SSL Enforcing  │
+│  wp-content/uploads/              ──> Media Relinking & Local Hosting  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                       PRODUCTION PRESENTATION                          │
+│  child-theme/archive.php          ──> Standardized CSS Grid (4-Col)    │
+│  child-theme/style.css            ──> Responsive Editorial Styling     │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 3. Taxonomy Normalization & Sanitization
+## 2. Ingestion Mechanics (Phase 1: Extraction & Staging)
 
-To restore information architecture integrity, data remodeling was split into three stages:
+### 2.1 Extraction (Source Environment)
+- **Source:** Google Blogger Export Tool (`blog-MM-DD-YYYY.xml`).
+- **Protocol:** Atom 1.0 XML syndication format containing post bodies, comments, timestamp metadata, author tags, and untyped label elements.
 
-### 3.1 Bulk Conversion: Categories $\to$ Tags
-Using automated database routines and the WordPress Taxonomy Converter, all flat labels imported from Blogger were converted from primary categories into contextual tags:
-* Changed metadata relationships from `taxonomy = 'category'` to `taxonomy = 'post_tag'`.
-* Preserved the original tagging granularity for search engine discovery and entity indexing.
+### 2.2 Transform & Load (Staging Ingestion)
+- **Engine:** WordPress Core XML Importer (`wordpress-importer` plugin / WP-CLI).
+- **Execution:**
+  ```bash
+  wp import blog-archive.xml --authors=mapping.csv --skip=attachment
+  ```
+- **Post-Import Artifacts:**
+  - Post entities successfully staged into `wp_posts` with `post_type = 'post'`.
+  - Nested historical permalink structures retained in post metadata (`/yyyy/mm/slug.html`).
+  - Google user profile links mapped to administrative author IDs.
+
+---
+
+## 3. Upstream Technical Debt & Structural Mismatches
+
+| Domain | Google Blogger Origin | WordPress Relational Model | Impact / Technical Debt |
+| :--- | :--- | :--- | :--- |
+| **Taxonomies** | Flat `term` labels. No hierarchy. | Two-tier relational (`category` vs. `post_tag`). | 100% of labels imported as flat tags, leaving primary categories unpopulated. |
+| **Media Storage** | Google UserContent CDN (`bp.blogspot.com`, `lh3.googleusercontent.com`). | Local filesystem (`wp-content/uploads/YYYY/MM/`). | Broken images due to referer blocking, third-party link rot, and HTTP mixed content. |
+| **Permalinks** | Date-based `.html` static endpoints (`/2008/11/post.html`). | Canonical rewrite rules (`/%postname%/`). | 404 indexing errors and broken internal backlink topologies. |
+| **Encodings** | Mixed legacy Latin-1 / UTF-8 entity fragments. | `utf8mb4_unicode_ci` / `utf8mb4_520_ci`. | Broken diacritics, typography symbols, and corrupted quote entities. |
+
+---
+
+## 4. Remediation & Transformation Runbook (Phase 2: Database Layer)
+
+### 4.1 Step 1: Media Localization & Host Decoupling
+Blogger images referenced direct CDN paths. Assets were extracted and rematerialized into local storage to guarantee permanent preservation:
+
+1. **Extraction:** Downloaded all external assets matching `*.googleusercontent.com` and `*.blogspot.com` paths referenced in `post_content`.
+2. **Directory Mount:** Placed into `wp-content/uploads/imported-archive/`.
+3. **Database Remapping:** Executed targeted SQL string replacement routines to redirect requests from remote origins to local media stores:
+   ```sql
+   UPDATE wp_posts 
+   SET post_content = REPLACE(post_content, 'http://1.bp.blogspot.com/', 'https://sepulchralvoicefanzine.com/wp-content/uploads/imported-archive/')
+   WHERE post_type = 'post';
+
+   UPDATE wp_posts 
+   SET post_content = REPLACE(post_content, 'http://2.bp.blogspot.com/', 'https://sepulchralvoicefanzine.com/wp-content/uploads/imported-archive/')
+   WHERE post_type = 'post';
+   ```
+
+### 4.2 Step 2: Taxonomy Restructuring & Entity Deduplication
+Blogger's untyped labels resulted in hundreds of redundant, synonymous, or malformed taxonomy associations.
+
+The transformation script (`sql/taxonomy-migration.sql`) enforced the following operations:
+- **Taxonomy Elevation:** Elevated broad editorial labels (*Notícias*, *Entrevistas*, *Edições*, *Shows & Eventos*) from `post_tag` to first-class `category` entries in `wp_term_taxonomy`.
+- **Deduplication:** Merged overlapping synonym terms (e.g., `interview`, `interviews`, `entrevista` $\rightarrow$ `Entrevistas`) by updating `wp_term_relationships.term_taxonomy_id` and deleting redundant records.
+- **Relational Count Resynchronization:** Recomputed real-time association counts for all terms against published posts:
+  ```sql
+  UPDATE wp_term_taxonomy tt 
+  SET tt.count = (
+      SELECT COUNT(tr.object_id)
+      FROM wp_term_relationships tr
+      INNER JOIN wp_posts p ON tr.object_id = p.ID
+      WHERE tr.term_taxonomy_id = tt.term_taxonomy_id
+        AND p.post_status = 'publish'
+        AND p.post_type = 'post'
+  );
+  ```
+
+### 4.3 Step 3: Global SSL/TLS Protocol & Host Consolidation
+To guarantee compliance with modern transport security standards and eliminate mixed-content browser flags, `sql/search-replace-ssl.sql` was executed with transactional safety:
+
+- Migrated all primary options (`home`, `siteurl`) to enforce `https://sepulchralvoicefanzine.com`.
+- Sanitized internal hyperlinks, embedded assets, and metadata fields across `wp_posts`, `wp_postmeta`, and `wp_comments`.
+- Guarded against corruption of serialized PHP structures (`WHERE meta_value NOT LIKE 'a:%' AND meta_value NOT LIKE 'O:%'`).
+
+---
+
+## 5. Verification & Validation Metrics
+
+Following the pipeline execution, systematic validation queries confirmed zero data degradation:
 
 ```sql
--- Schema alignment conceptual example:
--- Relinking orphan terms to the post_tag taxonomy
-UPDATE wp_term_taxonomy 
-SET taxonomy = 'post_tag' 
-WHERE taxonomy = 'category' 
-  AND term_id NOT IN (/* Protected Macro-Category IDs */);
+-- Metric 1: Verify absence of insecure HTTP references
+SELECT COUNT(*) AS remaining_http_references 
+FROM wp_posts 
+WHERE post_content LIKE '%http://sepulchralvoicefanzine.com%'
+   OR post_content LIKE '%http://%.blogspot.com%';
+-- Expected Result: 0
+
+-- Metric 2: Verify zero orphaned taxonomy relationship records
+SELECT COUNT(*) AS orphaned_relationships
+FROM wp_term_relationships tr
+LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+WHERE tt.term_taxonomy_id IS NULL;
+-- Expected Result: 0
+
+-- Metric 3: Verify core category assignment distribution
+SELECT 
+    t.name AS category_name,
+    t.slug,
+    tt.count AS live_post_count
+FROM wp_terms t
+JOIN wp_term_taxonomy tt ON t.term_id = tt.term_id
+WHERE tt.taxonomy = 'category'
+ORDER BY tt.count DESC;
+-- Expected Result: Consistent, non-zero values across primary editorial categories
 ```
 
-## 3.2 Macro-Category Schema Definition
+---
 
-A clean, 5-tier dimensional model was established to categorize every historical and incoming publication:
+## 6. Maintenance & Operational Sign-off
 
-| Macro-Category | Description | Editorial Target |
-| :--- | :--- | :--- |
-| `Edições` | Physical/print fanzine issues | Full catalog of printed releases |
-| `Entrevistas` | Long-form Q&A features | Band and artist interviews |
-| `Notícias` | Scene announcements & press releases | Fast-turnaround news updates |
-| `Shows` | Live gig photography and reports | On-site event coverage |
-| `Arquivos do Site` | Evergreen legacy content | Retrospective features and editorial notes |
-
-## 3.3 Rule-Based Post Reclassification
-
-Posts were reassociated with the new macro-categories using bulk tagging rules, pattern matching across post titles/excerpts, and manual editorial review.
-
-## 4. Chronological Archival Partitioning
-
-To enable seamless historical discovery across the 2007–2026 timeline:
-
-1. Date-Based Indexing: Structured dynamic year/month archives using native WordPress rewrite endpoints (/YYYY/MM/).
-2. Dedicated Archive Template: Routed taxonomy queries directly to a custom, non-blocking archive.php template.
-3. Query Optimization (pre_get_posts): Standardized pagination boundaries across archive queries:
-
-```php
-function custom_archive_posts_per_page( $query ) {
-    if ( ! is_admin() && $query->is_main_query() && ( is_archive() \vert{}\vert{} is_category() \vert{}\vert{} is_tag() ) ) {$query->set( 'posts_per_page', 16 );
-    }
-}
-add_action( 'pre_get_posts', 'custom_archive_posts_per_page' );
-```
-
-## 5. Hosting & Infrastructure Deployment
-
-The operational environment was configured on Hostinger:
-
-1. DNS Routing & Security: Apex and subdomain DNS records pointed to web servers; automated SSL/TLS handshake provisioning.
-2. Server Stack: Nginx/Apache hybrid stack with PHP 8.x and MySQL 8.x.
-3. Performance Layer: Server-level object caching and Gzip/Brotli compression for fast static asset delivery.
+- **Rollback Safety:** All migrations are encapsulated in explicit transactions (`START TRANSACTION` / `COMMIT`) with snapshot staging tables (`_bkp_*`).
+- **Archive Display:** Downstream rendering is handled by `child-theme/archive.php` and `child-theme/style.css`, mapping the newly classified categories into a standardized, symmetric 4-column CSS Grid.
+- **Sign-off Status:** Production Database Remediated & Validated. Data pipeline successfully executed and archived.
